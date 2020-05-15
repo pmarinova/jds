@@ -1,5 +1,8 @@
 package jds;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import com.sleepycat.je.Cursor;
@@ -10,23 +13,33 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
-class TableStorage<K, V> {
+public class TableStorage<K, V> {
 
 	private final JDSTable<K, V> table;
 
 	private Database db;
+
+	private final Map<String, IndexStorage<?, V>> indexStores = new HashMap<>(); 
 	
-	public TableStorage( JDSTable<K, V> table ) {
+	public TableStorage( JDataStorage storage, JDSTable<K, V> table ) {
 		this.table = table;
+		
+		for ( JDSIndex<?, V> i : table.indexes() ) {
+			IndexStorage<?, V> is = new IndexStorage<>( storage, i );
+			
+			indexStores.put( i.name(), is );
+		}
 	}
 
-	public void connect( Environment env ) {
+	void connect( Environment env ) {
 
 		DatabaseConfig cfg = new DatabaseConfig();
 		cfg.setAllowCreate( true );
 		cfg.setTransactional( true );
 		
 		this.db = env.openDatabase( Transactions.require(), table.name(), cfg );
+		
+		indexStores.values().forEach( i -> i.connect( env, db ) );
 	}
 	
 	public V get( K k ) {
@@ -76,7 +89,18 @@ class TableStorage<K, V> {
 		}
 	}
 	
-	public void close() {
+	public <I> V uniqueIndexGet( String idx, I key ) {
+		return index( idx ).find( key );
+	}
+	
+	public <I> List<V> nonUniqueIndexGet( String idx, I key ) {
+		return index( idx ).list( key );
+	}
+	
+	void close() {
+		
+		indexStores.values().forEach( IndexStorage::close );
+		
 		if ( db != null ) {
 			JDataStorage.silently( db::close );
 		}
@@ -98,11 +122,20 @@ class TableStorage<K, V> {
 		return new DatabaseEntry( table.valueConverter().serialize( v ) );
 	}
 	
+	@SuppressWarnings("unchecked")
+	private <I> IndexStorage<I, V> index( String name ) {
+		IndexStorage<I, V> s = (IndexStorage<I, V>) indexStores.get( name );
+		if ( s == null  ) {
+			throw new IllegalArgumentException( "No such index: " + name );
+		}
+		return s;
+	}
+	
 	public JDSTable<K, V> table() {
 		return table;
 	}
 	
-	public Database db() {
+	Database db() {
 		return db;
 	}
 	

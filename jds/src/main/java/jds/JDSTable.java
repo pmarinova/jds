@@ -1,5 +1,8 @@
 package jds;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import jds.converter.JDSConverter;
@@ -18,6 +21,8 @@ public class JDSTable<K, V> {
 	
 	private JDSConverter<V> valueConverter;
 
+	private final List<JDSIndex<?,V>> indexes = new ArrayList<>();
+	
 	public JDSTable() { }
 	
 	public JDSTable( String name ) {
@@ -99,5 +104,27 @@ public class JDSTable<K, V> {
 	public JDSTable<K, V> valueConverter( JDSConverter<V> c ) {
 		this.valueConverter = c;
 		return this;
+	}
+	
+	public <I> JDSTable<K, V> uniqueIndex( String name, Class<I> keytype, Function<V, I> indexer ) {
+		return index( new JDSIndex<I, V>( name, keytype, valueType, indexer, true ) );
+	}
+	
+	public <I> JDSTable<K, V> nonUniqueIndex( String name, Class<I> keytype, Function<V, I> indexer ) {
+		return index( new JDSIndex<I, V>( name, keytype, valueType, indexer, false ) );
+	}
+	
+	public JDSTable<K, V> index( JDSIndex<?, V> i ) {
+		Objects.requireNonNull( i.name() );
+		Objects.requireNonNull( i.keyType() );
+		Objects.requireNonNull( i.valueType() );
+		Objects.requireNonNull( i.indexer() );
+		
+		this.indexes.add( i );
+		return this;
+	}
+	
+	public List<JDSIndex<?, V>> indexes() {
+		return indexes;
 	}
 }

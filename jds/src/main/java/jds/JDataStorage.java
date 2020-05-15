@@ -1,7 +1,9 @@
 package jds;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -99,48 +101,64 @@ public class JDataStorage {
 	}
 	
 	public boolean insert( Object o ) {
-		TableStorage<Object, Object> table = requireTable( o );
+		TableStorage<Object, Object> table = requireStorage( o );
 		return table.insert( o );
 	}
 	
 	public boolean update( Object o ) {
-		TableStorage<Object, Object> table = requireTable( o );
+		TableStorage<Object, Object> table = requireStorage( o );
 		return table.update( o );
 	}
 	
 	public boolean store( Object o ) {
-		TableStorage<Object, Object> table = requireTable( o );
+		TableStorage<Object, Object> table = requireStorage( o );
 		return table.store( o );
 	}
 	
 	public boolean delete( Object o ) {
-		TableStorage<Object, Object> table = requireTable( o );
+		TableStorage<Object, Object> table = requireStorage( o );
 		return table.delete( o );
 	}
 	
 	public <K, V> boolean deleteByKey( Class<V> type, K key ) {
-		TableStorage<K, V> table = requireTableForType( type );
+		TableStorage<K, V> table = requireStorageForType( type );
 		return table.deleteByKey( key );
 	}
 	
 	public <K, V> V get( Class<V> type, K key ) {
-		TableStorage<K, V> table = requireTableForType( type );
+		TableStorage<K, V> table = requireStorageForType( type );
 		return table.get( key );
 	}
 	
+	public <T> List<T> list( Class<T> type ) {
+		List<T> r = new ArrayList<>();
+		forEachRecord( type, r::add );
+		return r;
+	}
+	
 	public <T> void forEachRecord( Class<T> type, Consumer<T> c ) {
-		TableStorage<Object, T> table = requireTableForType( type );
+		TableStorage<Object, T> table = requireStorageForType( type );
 		table.forEachRecord( c );
 	}
 	
-	@SuppressWarnings("unchecked")
-	private <K, V> TableStorage<K, V> requireTable( V o ) {
-		Class<V> type = (Class<V>) o.getClass();
-		return requireTableForType( type );
+	public <K, T> T uniqueIndexGet( Class<T> type, String idx, K key ) {
+		TableStorage<Object, T> table = requireStorageForType( type );
+		return table.uniqueIndexGet( idx, key );
 	}
 	
-	private <K, V> TableStorage<K, V> requireTableForType( Class<V> type ) {
-		TableStorage<K, V> t =  table( type );
+	public <K, T> List<T> nonUniqueIndexGet( Class<T> type, String idx, K key ) {
+		TableStorage<Object, T> table = requireStorageForType( type );
+		return table.nonUniqueIndexGet( idx, key );
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <K, V> TableStorage<K, V> requireStorage( V o ) {
+		Class<V> type = (Class<V>) o.getClass();
+		return requireStorageForType( type );
+	}
+	
+	private <K, V> TableStorage<K, V> requireStorageForType( Class<V> type ) {
+		TableStorage<K, V> t =  storage( type );
 		
 		if ( t == null ) {
 			throw new IllegalStateException( "No table for: " + type );
@@ -150,7 +168,7 @@ public class JDataStorage {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <K, V> TableStorage<K, V> table( Class<V> dataType ) {
+	public <K, V> TableStorage<K, V> storage( Class<V> dataType ) {
 		return (TableStorage<K, V>) tables.get( dataType );
 	}
 	
@@ -196,7 +214,7 @@ public class JDataStorage {
 			table.valueConverter( converters.converter( table.valueType() ) );
 		}
 		
-		this.tables.put( table.valueType(), new TableStorage<>( table ) );
+		this.tables.put( table.valueType(), new TableStorage<>( this, table ) );
 		return this;
 	}
 	
@@ -207,5 +225,15 @@ public class JDataStorage {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public byte[] serialize( Object o ) {
+		Class<Object> c = (Class<Object>) o.getClass();
+		return converters.converter( c ).serialize( o );
+	}
+	
+	public <T> T deserialize( byte[] data, Class<T> target ) {
+		return converters.converter( target ).deserialize( data );
 	}
 }

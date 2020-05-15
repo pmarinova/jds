@@ -32,14 +32,22 @@ public class TestApp {
 		s.store( new UserActivity( "u1" , "login" ) );
 		s.store( new UserActivity( "u1" , "logout" ) );
 		
-		if ( true ) {
-			throw new RuntimeException();
-		}
+		s.store( new UserActivity( "u2" , "login" ) );
+		s.store( new UserActivity( "u2" , "login" ) );
 	}
 	
 	private static void print( JDataStorage s ) {
 		s.forEachRecord( User.class, System.out::println );
-		s.forEachRecord( UserActivity.class, System.out::println );		
+		s.forEachRecord( UserActivity.class, System.out::println );
+		
+		System.out.println( "----------------------------Index search: u1--------------------------------" );
+		s.nonUniqueIndexGet( UserActivity.class, "userId", "u1" ).forEach( System.out::println ); 
+		
+		System.out.println( "----------------------------Index search: u2--------------------------------" );
+		s.nonUniqueIndexGet( UserActivity.class, "userId", "u2" ).forEach( System.out::println );
+		
+		System.out.println( "----------------------------Index search: u3--------------------------------" );
+		s.nonUniqueIndexGet( UserActivity.class, "userId", "u3" ).forEach( System.out::println );
 	}
 	
 	private static JDataStorage storage() {
@@ -53,11 +61,12 @@ public class TestApp {
 						.keyProvider( User::getId )
 				)
 				.with( 
-						new JDSTable<String, UserActivity>( "user_activities" )
-							.keyType( String.class )
-							.valueType( UserActivity.class )
-							.keyProvider( UserActivity::getId )
-					)
+					new JDSTable<String, UserActivity>( "user_activities" )
+						.keyType( String.class )
+						.valueType( UserActivity.class )
+						.keyProvider( UserActivity::getId )
+						.nonUniqueIndex( "userId", String.class, UserActivity::getUserId )
+				)
 		;
 	}
 }
