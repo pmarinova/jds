@@ -11,7 +11,7 @@ public class JDSTransaction {
 	}
 
 	void setup() {
-		Transactions.set( tx );
+		Transactions.set( this );
 	}
 
 	public boolean isValid() {

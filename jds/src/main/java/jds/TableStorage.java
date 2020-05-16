@@ -36,6 +36,7 @@ public class TableStorage<K, V> {
 		DatabaseConfig cfg = new DatabaseConfig();
 		cfg.setAllowCreate( true );
 		cfg.setTransactional( true );
+		cfg.setTemporary( table.temporary() );
 		
 		this.db = env.openDatabase( Transactions.require(), table.name(), cfg );
 		

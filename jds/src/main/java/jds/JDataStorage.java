@@ -46,27 +46,23 @@ public class JDataStorage {
 		dbConfig.setAllowCreate( true );
 		dbConfig.setTransactional( true );
 		
-		JDSTransaction tx = beginTransaction();
-		
-		try {
+		transactional( () -> {
 			
 			for ( TableStorage<?, ?> t : tables.values() ) {
 				t.connect( this.env );
 			}
 			
-			tx.commit();
-		}
-		finally {
-			if ( tx.isValid() ) {
-				tx.abort();
-			}
-		}
+		});
 	}
 	
 	public JDSTransaction beginTransaction() {
 		JDSTransaction tx = new JDSTransaction( env.beginTransaction( null, null ) );
 		tx.setup();
 		return tx;
+	}
+	
+	public JDSTransaction currentTransaction() {
+		return Transactions.currentJDSTransaction();
 	}
 	
 	public void transactional( Runnable r ) {

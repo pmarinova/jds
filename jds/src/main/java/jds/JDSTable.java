@@ -23,6 +23,8 @@ public class JDSTable<K, V> {
 
 	private final List<JDSIndex<?,V>> indexes = new ArrayList<>();
 	
+	private boolean temporary;
+	
 	public JDSTable() { }
 	
 	public JDSTable( String name ) {
@@ -126,5 +128,14 @@ public class JDSTable<K, V> {
 	
 	public List<JDSIndex<?, V>> indexes() {
 		return indexes;
+	}
+	
+	public boolean temporary() {
+		return temporary;
+	}
+	
+	public JDSTable<K, V> temporary( boolean b ) {
+		this.temporary = b;
+		return this;
 	}
 }

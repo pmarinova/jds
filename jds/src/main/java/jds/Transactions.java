@@ -4,9 +4,9 @@ import com.sleepycat.je.Transaction;
 
 class Transactions {
 
-	private static final ThreadLocal<Transaction> DATA = new ThreadLocal<>();
+	private static final ThreadLocal<JDSTransaction> DATA = new ThreadLocal<>();
 	
-	static void set( Transaction t ) {
+	static void set( JDSTransaction t ) {
 		DATA.set( t );
 	}
 	
@@ -14,8 +14,13 @@ class Transactions {
 		DATA.remove();
 	}
 	
-	static Transaction current() {
+	static JDSTransaction currentJDSTransaction() {
 		return DATA.get();
+	}
+	
+	static Transaction current() {
+		JDSTransaction c = currentJDSTransaction();
+		return c != null ? c.transaction() : null;
 	}
 	
 	public static Transaction require() {
