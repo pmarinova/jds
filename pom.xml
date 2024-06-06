@@ -14,21 +14,12 @@
 		<java.version>1.8</java.version>
 	</properties>
 
-	<repositories>
-	  <repository>
-	    <id>gitlab-maven</id>
-	    <url>https://gitlab.com/api/v4/projects/18770792/packages/maven</url>
-	  </repository>
-	</repositories>
 	<distributionManagement>
 	  <repository>
-	    <id>gitlab-maven</id>
-	    <url>https://gitlab.com/api/v4/projects/18770792/packages/maven</url>
+	    <id>github</id>
+	    <name>GitHub Packages</name>
+	    <url>https://maven.pkg.github.com/pmarinova/jds</url>
 	  </repository>
-	  <snapshotRepository>
-	    <id>gitlab-maven</id>
-	    <url>https://gitlab.com/api/v4/projects/18770792/packages/maven</url>
-	  </snapshotRepository>
 	</distributionManagement>
 
 
